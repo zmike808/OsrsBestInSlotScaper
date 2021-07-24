@@ -115,7 +115,12 @@ def main():
                 matches = process.extract(boss, all_bosses)
                 sorted_matches = sorted(matches, key=lambda x: x[1], reverse=True)
                 for matched_boss, ratio in sorted_matches:
-                    if ratio >= levenshtein_ratio_threshold:
+                    # Assume 100 ratio is good without asking the user. (Usually diffs in capitalization.
+                    if ratio == 100:
+                        bosses_of_interest.append(matched_boss)
+                        boss_match_found = True
+                        break
+                    elif ratio >= levenshtein_ratio_threshold:
                         user_question =\
                             "Similar matched boss is " +\
                             matched_boss +\

@@ -92,7 +92,11 @@ class BestInSlots:
             sorted_matches = sorted(matches, key=lambda x: x[1], reverse=True)
             match_found = False
             for matched_item, ratio in sorted_matches:
-                if ratio >= self.levenshtein_ratio_threshold:
+                # Assume 100 ratio is good without asking the user. (Usually diffs in capitalization.
+                if ratio == 100:
+                    match_found = True
+                    break
+                elif ratio >= self.levenshtein_ratio_threshold:
                     user_question = \
                         "Similar matched boss is " + \
                         matched_item + \
