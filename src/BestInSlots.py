@@ -1,7 +1,9 @@
 from BestInSlotScraper import BestInSlotScraper
-import Timing
+import ScrapingUtilities
+import Utilities
 
 from colorlog import ColoredFormatter
+from fuzzywuzzy import process
 import concurrent.futures
 import sys
 import yaml
@@ -10,15 +12,20 @@ import logging
 
 class BestInSlots:
 
-    def __init__(self, bosses_of_interest=[]):
-        self.logger = logging.getLogger(__name__)
-        handler = logging.StreamHandler()
-        handler.setFormatter(ColoredFormatter("%(log_color)s%(levelname)s:%(message)s%(reset)s"))
-        self.logger.addHandler(handler)
-        self.logger.setLevel(logging.INFO)
+    def __init__(self, bosses_of_interest=[], levenshtein_ratio_threshold=60, logger=None):
 
         self.best_in_slots_all_bosses = {}
         self.best_in_slot_items = {}
+        self.levenshtein_ratio_threshold = levenshtein_ratio_threshold
+
+        if logger is None:
+            self.logger = logging.getLogger(__name__)
+            handler = logging.StreamHandler()
+            handler.setFormatter(ColoredFormatter("%(log_color)s%(levelname)s:%(message)s%(reset)s"))
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.INFO)
+        else:
+            self.logger = logger
 
         self.compute_best_in_slots(bosses_of_interest)
 
@@ -60,13 +67,10 @@ class BestInSlots:
     def __scrape_boss_best_in_slots(self, boss):
         best_in_slot_scraper = BestInSlotScraper()
         self.logger.info("Scraping best in slot gear for %s", boss)
-        boss_strategy_url = self.__construct_boss_strategy_url(boss)
+        boss_strategy_url = ScrapingUtilities.construct_boss_strategy_url(boss)
         self.logger.debug("URL: %s", boss_strategy_url)
         best_in_slots = best_in_slot_scraper.scrape(boss_strategy_url)
         return best_in_slots
-
-    def __construct_boss_strategy_url(self, boss):
-        return "https://oldschool.runescape.wiki/w/" + boss.replace(" ", "_") + "/Strategies"
 
     def print_best_in_slot_items(self, items_to_print=sys.maxsize):
         best_in_slot_items_sorted = sorted(self.best_in_slot_items.items(), key=lambda x: x[1], reverse=True)
@@ -75,16 +79,39 @@ class BestInSlots:
             if i >= items_to_print:
                 break
 
-    def print_bosses_where_best_in_slot(self, item):
+    def print_bosses_where_item_is_best_in_slot(self, item):
         if item in self.best_in_slot_items:
             counts, bosses = self.best_in_slot_items[item]
             print(item, "is best in slot at", counts, "bosses.")
             for boss in bosses:
                 print("-", boss)
         else:
-            print("Could not find", item, "in any best in slot setups.")
+            self.logger.warning("Could not find %s in any best in slot setups.", item)
+            valid_items = list(self.best_in_slot_items.keys())
+            matches = process.extract(item, valid_items)
+            sorted_matches = sorted(matches, key=lambda x: x[1], reverse=True)
+            match_found = False
+            for matched_item, ratio in sorted_matches:
+                # Assume 100 ratio is good without asking the user. (Usually diffs in capitalization.
+                if ratio == 100:
+                    match_found = True
+                    break
+                elif ratio >= self.levenshtein_ratio_threshold:
+                    user_question = \
+                        "Similar matched boss is " + \
+                        matched_item + \
+                        " with ratio " \
+                        + str(ratio) + \
+                        " is this the boss you meant?"
+                    if Utilities.query_yes_no(user_question):
+                        match_found = True
+                        break
+            if match_found:
+                self.print_bosses_where_item_is_best_in_slot(matched_item)
+            else:
+                self.logger.warning("No matching item found for %s.", item)
 
-    def print_best_in_slots_for_boss(self, boss, setups_to_print=sys.maxsize):
+    def print_best_in_slot_items_for_boss(self, boss, setups_to_print=sys.maxsize):
         if boss in self.best_in_slots_all_bosses:
             best_in_slots = self.best_in_slots_all_bosses[boss]
             print("Best in slot gear for ", boss, ":", sep="")
@@ -95,5 +122,4 @@ class BestInSlots:
                 else:
                     break
         else:
-            print("Could not find any setups for ", boss, ".", sep="")
-            print()
+            self.logger.warning("Could not find any setups for %s.", boss)
