@@ -80,10 +80,10 @@ def main():
             best_in_slots.print_best_in_slot_items()
         else:
             for item in args.items_of_interest:
-                best_in_slots.print_bosses_where_best_in_slot(item)
+                best_in_slots.print_bosses_where_item_is_best_in_slot(item)
     if args.print_bosses:
         for boss in bosses_of_interest:
-            best_in_slots.print_best_in_slots_for_boss(boss, setups_to_print=args.setups_to_print)
+            best_in_slots.print_best_in_slot_items_for_boss(boss, setups_to_print=args.setups_to_print)
 
 
 if __name__ == '__main__':

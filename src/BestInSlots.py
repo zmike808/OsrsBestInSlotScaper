@@ -75,7 +75,7 @@ class BestInSlots:
             if i >= items_to_print:
                 break
 
-    def print_bosses_where_best_in_slot(self, item):
+    def print_bosses_where_item_is_best_in_slot(self, item):
         if item in self.best_in_slot_items:
             counts, bosses = self.best_in_slot_items[item]
             print(item, "is best in slot at", counts, "bosses.")
@@ -84,7 +84,7 @@ class BestInSlots:
         else:
             print("Could not find", item, "in any best in slot setups.")
 
-    def print_best_in_slots_for_boss(self, boss, setups_to_print=sys.maxsize):
+    def print_best_in_slot_items_for_boss(self, boss, setups_to_print=sys.maxsize):
         if boss in self.best_in_slots_all_bosses:
             best_in_slots = self.best_in_slots_all_bosses[boss]
             print("Best in slot gear for ", boss, ":", sep="")
