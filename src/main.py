@@ -75,9 +75,7 @@ def scrape_bosses(bosses_url, logger):
     # Validate the bosses. Remove any boss that does not have a valid strategy page.
     logger.info("Removing bosses with no valid strategy page...")
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        valid_bosses = [
-            valid_boss for valid_boss in executor.map(is_valid_boss, bosses_of_interest)
-        ]
+        valid_bosses = list(executor.map(is_valid_boss, bosses_of_interest))
     bosses_of_interest_filtered = [boss for (boss, is_valid) in zip(bosses_of_interest, valid_bosses) if is_valid]
     for removed_boss in list(set(bosses_of_interest) - set(bosses_of_interest_filtered)):
         logger.warning("No strategy page found for %s. Removing from list of bosses.", removed_boss)

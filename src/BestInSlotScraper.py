@@ -38,8 +38,7 @@ class BestInSlotScraper:
             caption = table.find('caption')
             if table.get('class') == ['wikitable'] or (caption is not None and self.equipment_string in caption.string):
                 for tr in table.find_all('tr'):
-                    rank = 0
-                    for td in tr.find_all('td'):
+                    for rank, td in enumerate(tr.find_all('td')):
                         img = td.find('img')
                         if img is not None:
                             alt = img.get("alt")
@@ -56,5 +55,4 @@ class BestInSlotScraper:
                                         best_in_slots[rank][current_slot].append(title)
                                 else:
                                     best_in_slots[rank][current_slot] = [title]
-                        rank += 1
         return dict(best_in_slots)

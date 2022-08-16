@@ -39,9 +39,10 @@ class BestInSlots:
     def __compute_bosses_best_in_slots(self, bosses_of_interest):
         best_in_slots_all_bosses = {}
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            all_best_in_slots = [
-                best_in_slots for best_in_slots in executor.map(self.__scrape_boss_best_in_slots, bosses_of_interest)
-            ]
+            all_best_in_slots = list(
+                executor.map(self.__scrape_boss_best_in_slots, bosses_of_interest)
+            )
+
         for boss, best_in_slots in zip(bosses_of_interest, all_best_in_slots):
             if len(best_in_slots) > 0:
                 best_in_slots_all_bosses[boss] = best_in_slots
@@ -69,8 +70,7 @@ class BestInSlots:
         self.logger.info("Scraping best in slot gear for %s", boss)
         boss_strategy_url = ScrapingUtilities.construct_boss_strategy_url(boss)
         self.logger.debug("URL: %s", boss_strategy_url)
-        best_in_slots = best_in_slot_scraper.scrape(boss_strategy_url)
-        return best_in_slots
+        return best_in_slot_scraper.scrape(boss_strategy_url)
 
     def print_best_in_slot_items(self, items_to_print=sys.maxsize):
         best_in_slot_items_sorted = sorted(self.best_in_slot_items.items(), key=lambda x: x[1], reverse=True)
@@ -98,11 +98,11 @@ class BestInSlots:
                     break
                 elif ratio >= self.levenshtein_ratio_threshold:
                     user_question = \
-                        "Similar matched boss is " + \
-                        matched_item + \
-                        " with ratio " \
-                        + str(ratio) + \
-                        " is this the boss you meant?"
+                            "Similar matched boss is " + \
+                            matched_item + \
+                            " with ratio " \
+                            + str(ratio) + \
+                            " is this the boss you meant?"
                     if Utilities.query_yes_no(user_question):
                         match_found = True
                         break
